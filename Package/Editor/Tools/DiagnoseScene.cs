@@ -8,8 +8,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityMCP.Editor;
 using UnityMCP.Editor.Core;
+using UnityMCP.Editor.Utilities;
 
-#pragma warning disable CS0618 // EditorUtility.InstanceIDToObject is deprecated but still functional
 
 namespace UnityMCP.Editor.Tools
 {
@@ -478,7 +478,7 @@ namespace UnityMCP.Editor.Tools
 
                             if (property.propertyType == SerializedPropertyType.ObjectReference &&
                                 property.objectReferenceValue == null &&
-                                property.objectReferenceInstanceIDValue != 0)
+                                ObjectIdUtility.HasReference(property))
                             {
                                 string gameObjectPath = GetGameObjectPath(gameObject);
                                 string componentTypeName = component.GetType().Name;
