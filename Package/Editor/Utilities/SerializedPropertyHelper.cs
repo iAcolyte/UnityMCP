@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-#pragma warning disable CS0618 // EditorUtility.InstanceIDToObject is deprecated but still functional
 
 namespace UnityMCP.Editor.Utilities
 {
@@ -337,7 +336,7 @@ namespace UnityMCP.Editor.Utilities
 
             return new Dictionary<string, object>
             {
-                { "$ref", unityObject.GetInstanceID() },
+                { "$ref", ObjectIdUtility.GetId(unityObject) },
                 { "$name", unityObject.name },
                 { "$type", unityObject.GetType().Name }
             };
@@ -602,8 +601,8 @@ namespace UnityMCP.Editor.Utilities
                         // Auto-resolve raw instance IDs for convenience
                         try
                         {
-                            int instanceId = Convert.ToInt32(value);
-                            property.objectReferenceValue = EditorUtility.InstanceIDToObject(instanceId);
+                            long instanceId = Convert.ToInt64(value);
+                            property.objectReferenceValue = ObjectIdUtility.FromId(instanceId);
                             return true;
                         }
                         catch
@@ -844,25 +843,15 @@ namespace UnityMCP.Editor.Utilities
             UnityEngine.Object resolvedObject = null;
             string refDescription = "";
 
-            // Resolve by instance ID (integer)
-            if (refValue is int instanceId)
+            // Resolve by instance ID (integer; JSON deserialization may produce int or long)
+            if (refValue is int || refValue is long)
             {
-                resolvedObject = EditorUtility.InstanceIDToObject(instanceId);
+                long instanceId = Convert.ToInt64(refValue);
+                resolvedObject = ObjectIdUtility.FromId(instanceId);
                 refDescription = $"instance {instanceId}";
                 if (resolvedObject == null)
                 {
                     throw new ArgumentException($"No object found with instance ID {instanceId}.");
-                }
-            }
-            else if (refValue is long longId)
-            {
-                // Handle JSON deserialization which may produce long instead of int
-                int intId = (int)longId;
-                resolvedObject = EditorUtility.InstanceIDToObject(intId);
-                refDescription = $"instance {intId}";
-                if (resolvedObject == null)
-                {
-                    throw new ArgumentException($"No object found with instance ID {intId}.");
                 }
             }
             // Resolve by asset path (string starting with "Assets/")

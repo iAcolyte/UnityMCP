@@ -1021,7 +1021,7 @@ namespace UnityMCP.Editor.Tools
 
             if (!isFolder && asset != null)
             {
-                info["instanceID"] = asset.GetInstanceID();
+                info["instanceID"] = ObjectIdUtility.GetId(asset);
 
                 // Get file info
                 string fullPath = Path.GetFullPath(path);

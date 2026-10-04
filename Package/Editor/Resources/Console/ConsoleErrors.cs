@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
+using UnityMCP.Editor.Utilities;
 
 namespace UnityMCP.Editor.Resources.Console
 {
@@ -106,7 +107,9 @@ namespace UnityMCP.Editor.Resources.Console
                 var lineField = logEntryType.GetField("line", BindingFlags.Instance | BindingFlags.Public);
                 var columnField = logEntryType.GetField("column", BindingFlags.Instance | BindingFlags.Public);
                 var modeField = logEntryType.GetField("mode", BindingFlags.Instance | BindingFlags.Public);
-                var instanceIdField = logEntryType.GetField("instanceID", BindingFlags.Instance | BindingFlags.Public);
+                // Renamed to "entityId" (EntityId) in newer Unity versions
+                var instanceIdField = logEntryType.GetField("instanceID", BindingFlags.Instance | BindingFlags.Public)
+                    ?? logEntryType.GetField("entityId", BindingFlags.Instance | BindingFlags.Public);
 
                 // Mode flags for log type classification
                 // Based on Unity's internal LogEntry.mode field
@@ -140,7 +143,7 @@ namespace UnityMCP.Editor.Resources.Console
                         int lineNumber = lineField != null ? (int)lineField.GetValue(logEntry) : 0;
                         int columnNumber = columnField != null ? (int)columnField.GetValue(logEntry) : 0;
                         int mode = modeField != null ? (int)modeField.GetValue(logEntry) : 0;
-                        int instanceId = instanceIdField != null ? (int)instanceIdField.GetValue(logEntry) : 0;
+                        long instanceId = instanceIdField != null ? ObjectIdUtility.FromBoxedValue(instanceIdField.GetValue(logEntry)) : 0;
 
                         // Classify the entry type
                         string entryType = ClassifyLogEntry(mode, messageText);

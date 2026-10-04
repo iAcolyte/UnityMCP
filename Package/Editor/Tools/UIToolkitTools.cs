@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityMCP.Editor.Utilities;
 
 namespace UnityMCP.Editor.Tools
 {
@@ -813,7 +814,7 @@ namespace UnityMCP.Editor.Tools
                             name = obj.name,
                             type = obj.GetType().Name,
                             assetPath = string.IsNullOrEmpty(assetPath) ? null : assetPath,
-                            instanceId = obj.GetInstanceID()
+                            instanceId = ObjectIdUtility.GetId(obj)
                         };
                     }
                     return new
@@ -1238,16 +1239,9 @@ namespace UnityMCP.Editor.Tools
 
                     // Strategy 1: Try as instance ID (integer)
                     // Scene objects typically have negative instance IDs
-                    if (TryConvertToInt(value, out int instanceId))
+                    if (TryConvertToLong(value, out long instanceId))
                     {
-#if UNITY_6000_1_OR_NEWER
-                        // EntityIdToObject was introduced in Unity 6.1 (6000.1) and replaces
-                        // the now-deprecated InstanceIDToObject.
-                        newObj = EditorUtility.EntityIdToObject(instanceId);
-#else
-                        // Unity 6.0 (6000.0) and earlier: EntityIdToObject does not exist yet.
-                        newObj = EditorUtility.InstanceIDToObject(instanceId);
-#endif
+                        newObj = ObjectIdUtility.FromId(instanceId);
                         if (newObj != null)
                         {
                             resolvedSource = $"instanceId:{instanceId}";
@@ -1335,7 +1329,7 @@ namespace UnityMCP.Editor.Tools
                         {
                             name = newObj.name,
                             type = newObj.GetType().Name,
-                            instanceId = newObj.GetInstanceID(),
+                            instanceId = ObjectIdUtility.GetId(newObj),
                             isSceneObject,
                             assetPath = isSceneObject ? null : newAssetPath
                         },
@@ -1390,6 +1384,34 @@ namespace UnityMCP.Editor.Tools
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Tries to convert a value to an object identifier.
+        /// </summary>
+        private static bool TryConvertToLong(object value, out long result)
+        {
+            result = 0;
+
+            switch (value)
+            {
+                case int intVal:
+                    result = intVal;
+                    return true;
+                case long longVal:
+                    result = longVal;
+                    return true;
+                case float floatVal:
+                    result = (long)floatVal;
+                    return true;
+                case double doubleVal:
+                    result = (long)doubleVal;
+                    return true;
+                case string strVal:
+                    return long.TryParse(strVal, out result);
+                default:
+                    return false;
+            }
         }
 
         /// <summary>
